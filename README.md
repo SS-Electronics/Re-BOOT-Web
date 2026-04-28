@@ -163,47 +163,92 @@ sudo systemctl status reboot-web
 
 ## Nginx Configuration
 
-Re-BOOT Web binds to `localhost:5000`. Nginx acts as a reverse proxy, handles HTTPS termination, and correctly buffers Server-Sent Events.
+Re-BOOT Web's C server binds to `localhost:5000`. Nginx acts as the public-facing reverse proxy and handles HTTPS termination.
 
-### Basic HTTP (LAN / development)
+> **Important:** nginx ships with a default site that serves `/var/www/html` and conflicts
+> with any custom config. **Disable it first** before adding the Re-BOOT site:
+>
+> ```bash
+> sudo rm -f /etc/nginx/sites-enabled/default
+> ```
 
-Create `/etc/nginx/sites-available/reboot-web`:
+### Architecture
+
+The recommended setup splits responsibilities between nginx and the C server:
+
+```
+Browser
+  │
+  ▼  port 80 / 443
+nginx
+  ├── /api/*       → proxy_pass → reboot-web :5000  (API + SSE)
+  └── /            → serve www/ directly             (static HTML/CSS/JS)
+```
+
+nginx serves static files from the `www/` directory directly (fast, no subprocess).
+Only `/api/` requests are forwarded to the C server. SSE buffering is disabled only
+for the stream endpoint.
+
+---
+
+### Step 1 — Create the nginx site
+
+Create `/etc/nginx/sites-available/reboot-web` (replace the path with your actual
+deployment directory):
 
 ```nginx
 server {
     listen 80;
-    server_name _;          # or your Pi's hostname / IP
+    server_name _;       # replace with your Pi's hostname or IP if needed
 
-    # SSE and long-poll require these settings
-    proxy_read_timeout      3600s;
-    proxy_send_timeout      3600s;
+    # Absolute path to the www/ directory of this project
+    root /home/pi/Re-BOOT-Web/www;
+    index login.html;
 
+    # Serve static files (HTML, CSS, JS) directly — fast path
     location / {
-        proxy_pass          http://127.0.0.1:5000;
-        proxy_http_version  1.1;
+        try_files $uri $uri/ /login.html;
+    }
 
-        # Required for SSE — disable nginx buffering
-        proxy_buffering     off;
-        proxy_cache         off;
-        proxy_set_header    Connection '';
+    # Proxy all API calls to the C server
+    location /api/ {
+        proxy_pass         http://127.0.0.1:5000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host            $host;
+        proxy_set_header   X-Real-IP       $remote_addr;
+        proxy_set_header   X-Forwarded-For $proxy_add_x_forwarded_for;
+
+        # SSE requires these — disable nginx response buffering
+        proxy_buffering    off;
+        proxy_cache        off;
+        proxy_set_header   Connection '';
         chunked_transfer_encoding on;
 
-        proxy_set_header    Host              $host;
-        proxy_set_header    X-Real-IP         $remote_addr;
-        proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
     }
 }
 ```
 
-Enable and reload:
+### Step 2 — Enable and test
 
 ```bash
+# Disable the default nginx site (serves /var/www/html — conflicts with ours)
+sudo rm -f /etc/nginx/sites-enabled/default
+
+# Enable Re-BOOT Web site
 sudo ln -sf /etc/nginx/sites-available/reboot-web /etc/nginx/sites-enabled/
+
+# Test config syntax
 sudo nginx -t
+
+# Apply
 sudo systemctl reload nginx
 ```
 
-Now visit `http://<raspberry-pi-ip>/`.
+Visit `http://<raspberry-pi-ip>/` — you should see the login page.
+
+---
 
 ### HTTPS with Self-Signed Certificate
 
@@ -214,21 +259,25 @@ sudo openssl req -x509 -nodes -days 3650 -newkey rsa:2048 \
     -subj "/CN=reboot-web"
 ```
 
-Add to the nginx server block:
+Replace the `server` block in `/etc/nginx/sites-available/reboot-web` with:
 
 ```nginx
 server {
     listen 443 ssl;
     server_name _;
 
+    root /home/pi/Re-BOOT-Web/www;
+    index login.html;
+
     ssl_certificate     /etc/ssl/certs/reboot-web.crt;
     ssl_certificate_key /etc/ssl/private/reboot-web.key;
     ssl_protocols       TLSv1.2 TLSv1.3;
 
-    proxy_read_timeout  3600s;
-    proxy_send_timeout  3600s;
-
     location / {
+        try_files $uri $uri/ /login.html;
+    }
+
+    location /api/ {
         proxy_pass         http://127.0.0.1:5000;
         proxy_http_version 1.1;
         proxy_buffering    off;
@@ -237,6 +286,8 @@ server {
         chunked_transfer_encoding on;
         proxy_set_header   Host            $host;
         proxy_set_header   X-Real-IP       $remote_addr;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
     }
 }
 
@@ -246,6 +297,7 @@ server {
     server_name _;
     return 301 https://$host$request_uri;
 }
+
 ```
 
 ---
