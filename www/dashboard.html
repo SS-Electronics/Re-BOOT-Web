@@ -1,40 +1,88 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dashboard — Re-BOOT Web</title>
-  <link rel="stylesheet" href="/style.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Dashboard — Re-BOOT Web</title>
+<link href="/style.css" rel="stylesheet"/>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f6f8fa;
+  color: #2c3e50;
+  margin: 0;
+}
+.site-header {
+  background-color: #ffffff;
+  border-bottom: 2px solid #dcdcdc;
+  padding: 10px 20px;
+}
+.header-container {
+  display: flex;
+  align-items: center;
+}
+.logo {
+  height: 40px;
+  margin-right: 10px;
+}
+.org-name {
+  font-size: 20px;
+  font-weight: 600;
+}
+.site-footer {
+  background-color: #ffffff;
+  border-top: 2px solid #dcdcdc;
+  text-align: center;
+  padding: 15px;
+  font-size: 14px;
+  margin-top: 40px;
+}
+.site-footer a {
+  color: #0073e6;
+  text-decoration: none;
+}
+</style>
 </head>
 <body>
-<div class="layout">
-  <nav class="sidebar" id="sidebar"></nav>
-  <main class="main">
-    <div id="alerts"></div>
-    <div class="page-header">
-      <h1>Flash Jobs</h1>
-      <a href="/new_job.html" class="btn btn-primary">+ New Job</a>
-    </div>
+<header class="site-header">
+<div class="header-container">
+<img alt="SS Electronics Logo" class="logo" src="logo.png"/>
+<h1 class="org-name">SS Electronics</h1>
+</div>
+</header>
 
-    <div class="card">
-      <div style="overflow-x:auto;">
-        <table id="jobs-table">
-          <thead>
-            <tr>
-              <th>#</th><th>Name</th><th>HEX File</th>
-              <th>Interface</th><th>Device</th>
-              <th>Status</th><th>Created</th><th>By</th><th></th>
-            </tr>
-          </thead>
-          <tbody id="jobs-body">
-            <tr><td colspan="9" class="empty-state">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
+<div class="layout">
+<nav class="sidebar" id="sidebar"></nav>
+<main class="main">
+<div id="alerts"></div>
+<div class="page-header">
+<h1>Flash Jobs</h1>
+
+<div class="toolbar">
+  <a class="btn btn-primary" href="/new_job.html">New Job</a>
 </div>
 
+</div>
+<div class="card">
+<div style="overflow-x:auto;">
+<table id="jobs-table">
+<thead>
+<tr>
+<th>#</th><th>Name</th><th>HEX File</th>
+<th>Interface</th><th>Device</th>
+<th>Status</th><th>Created</th><th>By</th><th></th>
+</tr>
+</thead>
+<tbody id="jobs-body">
+<tr><td class="empty-state" colspan="9">Loading...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</main>
+</div>
 <script src="/app.js"></script>
 <script>
 let refreshTimer = null;
@@ -80,5 +128,17 @@ async function loadJobs() {
     await loadJobs();
 })();
 </script>
+
+<footer class="site-footer">
+<p>© 2026 SS Electronics</p>
+<p>Licensed under GPL 3.0</p>
+<p>Author: Subhajit Roy | Contact: subhajitroy005@gmail.com</p>
+<p>
+    Repository: 
+    <a href="https://github.com/SS-Electronics/Re-BOOT-Web" target="_blank">
+      GitHub - Re-BOOT-Web
+    </a>
+</p>
+</footer>
 </body>
 </html>

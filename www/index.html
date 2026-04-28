@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Re-BOOT Web</title>
+  <style>
+    body {
+      font-family: system-ui, Arial, sans-serif;
+      margin: 0;
+      background: #0f172a;
+      color: #e2e8f0;
+      line-height: 1.6;
+    }
+    header {
+      background: #111827;
+      padding: 16px 24px;
+      border-bottom: 1px solid #1f2937;
+      position: sticky;
+      top: 0;
+    }
+    header a {
+      color: #60a5fa;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    main {
+      padding: 24px;
+      max-width: 1000px;
+      margin: auto;
+    }
+    h1, h2, h3 {
+      color: #f8fafc;
+    }
+    code, pre {
+      background: #1e293b;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 12px 0;
+    }
+    th, td {
+      border: 1px solid #334155;
+      padding: 8px;
+    }
+    th {
+      background: #1e293b;
+    }
+    .box {
+      background: #111827;
+      padding: 16px;
+      border-radius: 10px;
+      margin: 12px 0;
+      border: 1px solid #1f2937;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  🔗 <a href="./login.html">Go to Login</a>
+</header>
+
+<main>
+
+<h1>Re-BOOT Web</h1>
+
+<p>
+A lightweight C web server for remotely flashing embedded firmware via the <b>Re-BOOT</b> utility.
+Runs on a Raspberry Pi and provides a Jenkins-style OTA portal.
+</p>
+
+<div class="box">
+<pre>
+╔══════════════════════════════════════╗
+║       Re-BOOT Web Server             ║
+║                                      ║
+║  Language  : C (no runtime deps)     ║
+║  HTTP lib  : Mongoose                ║
+║  Database  : SQLite3                 ║
+║  Auth      : Session + SHA256        ║
+║  Streaming : Server-Sent Events      ║
+╚══════════════════════════════════════╝
+</pre>
+</div>
+
+<h2>Features</h2>
+<ul>
+  <li>Upload Intel HEX firmware files</li>
+  <li>Configure re-boot CLI arguments from UI</li>
+  <li>Live log streaming via Server-Sent Events</li>
+  <li>Stop running flash jobs anytime</li>
+  <li>Job history with timestamps and exit codes</li>
+  <li>Multi-user login (admin / user roles)</li>
+  <li>Single-file SQLite database</li>
+</ul>
+
+<h2>Directory Structure</h2>
+<pre>
+Re-BOOT-Web/
+├── src/
+├── www/
+├── mongoose/
+├── uploads/
+├── logs/
+├── Makefile
+└── README.md
+</pre>
+
+<h2>Dependencies</h2>
+<table>
+  <tr><th>Package</th><th>Purpose</th></tr>
+  <tr><td>build-essential</td><td>GCC + Make</td></tr>
+  <tr><td>curl</td><td>Fetch Mongoose</td></tr>
+  <tr><td>libsqlite3-dev</td><td>SQLite database</td></tr>
+  <tr><td>nginx</td><td>Reverse proxy (optional)</td></tr>
+</table>
+
+<h2>Installation</h2>
+
+<h3>1. Install dependencies</h3>
+<pre>sudo ./install_deps.sh</pre>
+
+<h3>2. Build</h3>
+<pre>make</pre>
+
+<h3>3. Run</h3>
+<pre>./reboot-web</pre>
+
+<p>Default: <b>http://0.0.0.0:5000</b></p>
+
+<p>Default login: <b>admin / admin</b></p>
+
+<h2>CLI Options</h2>
+<pre>
+-l &lt;addr&gt;  Listen address (default 0.0.0.0:5000)
+-b &lt;path&gt;  re-boot binary
+-d &lt;db&gt;    SQLite database
+-u &lt;dir&gt;   uploads directory
+-L &lt;dir&gt;   logs directory
+-w &lt;dir&gt;   static www directory
+</pre>
+
+<h2>REST API</h2>
+
+<table>
+<tr><th>Method</th><th>Endpoint</th><th>Description</th></tr>
+<tr><td>POST</td><td>/api/login</td><td>Login</td></tr>
+<tr><td>GET</td><td>/api/jobs</td><td>List jobs</td></tr>
+<tr><td>POST</td><td>/api/jobs</td><td>Create job</td></tr>
+<tr><td>GET</td><td>/api/jobs/:id</td><td>Job details</td></tr>
+<tr><td>POST</td><td>/api/jobs/:id/run</td><td>Start job</td></tr>
+<tr><td>POST</td><td>/api/jobs/:id/stop</td><td>Stop job</td></tr>
+<tr><td>GET</td><td>/api/jobs/:id/stream</td><td>SSE logs</td></tr>
+</table>
+
+<h2>Nginx Architecture</h2>
+<pre>
+Browser → Nginx → Re-BOOT Web (localhost:5000)
+           ├── static www/
+           └── /api/* proxy
+</pre>
+
+<h2>System Service</h2>
+<pre>
+sudo systemctl enable reboot-web
+sudo systemctl start reboot-web
+</pre>
+
+<h2>License</h2>
+<p>GPL-3.0</p>
+
+</main>
+
+</body>
+</html>

@@ -1,71 +1,147 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login — Re-BOOT Web</title>
-  <link rel="stylesheet" href="/style.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Re-BOOT Web - Login</title>
+<link href="/style.css" rel="stylesheet"/>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f6f8fa;
+  color: #2c3e50;
+  margin: 0;
+}
+.site-header {
+  background-color: #ffffff;
+  border-bottom: 2px solid #dcdcdc;
+  padding: 10px 20px;
+}
+.header-container {
+  display: flex;
+  align-items: center;
+}
+.logo {
+  height: 40px;
+  margin-right: 10px;
+}
+.org-name {
+  font-size: 20px;
+  font-weight: 600;
+}
+.site-footer {
+  background-color: #ffffff;
+  border-top: 2px solid #dcdcdc;
+  text-align: center;
+  padding: 15px;
+  font-size: 14px;
+  margin-top: 40px;
+}
+.site-footer a {
+  color: #0073e6;
+  text-decoration: none;
+}
+</style>
 </head>
 <body>
+<header class="site-header">
+<div class="header-container">
+<img alt="SS Electronics Logo" class="logo" src="logo.png"/>
+<h1 class="org-name">SS Electronics</h1>
+</div>
+</header>
+
+<!-- LOGIN CENTER -->
 <div class="center-wrap">
-  <div style="width:340px;">
-    <div style="text-align:center;margin-bottom:24px;">
-      <div style="font-size:28px;font-weight:700;">
-        <span class="re">Re</span><span class="boot">-BOOT</span>
+<div style="width:360px;">
+<!-- Jenkins-style Title -->
+<div style="text-align:center;margin-bottom:22px;">
+<div style="font-size:26px;font-weight:700;color:var(--primary);">
+        Re-BOOT Web
       </div>
-      <div style="color:var(--muted);font-size:13px;margin-top:4px;">Firmware OTA Portal</div>
-    </div>
-
-    <div id="alerts"></div>
-
-    <div class="card">
-      <div class="card-body">
-        <form id="login-form">
-          <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" autocomplete="username" autofocus required>
-          </div>
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" autocomplete="current-password" required>
-          </div>
-          <button type="submit" class="btn btn-primary w-full" id="submit-btn">Sign In</button>
-        </form>
+<div style="font-size:12px;color:var(--muted);margin-top:4px;">
+        Continuous Integration &amp; OTA Infrastructure
       </div>
-    </div>
-    <div style="text-align:center;color:var(--muted);font-size:12px;margin-top:12px;">
-      Default credentials: admin / admin
-    </div>
-  </div>
 </div>
 
+<!-- LOGIN CARD -->
+<div class="card">
+<div class="card-header">
+        Login
+      </div>
+<div class="card-body">
+<form id="login-form">
+<div class="form-group">
+<label>Username</label>
+<input autocomplete="username" id="username" required="" type="text"/>
+</div>
+<div class="form-group">
+<label>Password</label>
+<input autocomplete="current-password" id="password" required="" type="password"/>
+</div>
+<br>
+<button class="btn btn-primary w-full" id="submit-btn">
+            Sign in
+          </button>
+</form>
+</div>
+</div>
+<!-- INFO -->
+<div style="text-align:center;margin-top:12px;font-size:11px;color:var(--muted);">
+      Default login: admin / admin
+    </div>
+<!-- FOOTER -->
+<div style="text-align:center;margin-top:30px;font-size:11px;color:var(--muted);">
+      © 2026 SS-Electronics • GPL v3 Licensed
+    </div>
+</div>
+</div>
 <script src="/app.js"></script>
 <script>
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('submit-btn');
-    btn.disabled = true;
-    btn.textContent = 'Signing in...';
-    try {
-        const r = await fetch('/api/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value,
-            }),
-        });
-        if (r.ok) {
-            window.location = '/dashboard.html';
-        } else {
-            showAlert('Invalid username or password.', 'error');
-        }
-    } catch {
-        showAlert('Network error.', 'error');
+document.getElementById("login-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const btn = document.getElementById("submit-btn");
+  btn.disabled = true;
+  btn.textContent = "Signing in...";
+
+  try {
+    const res = await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username: username.value,
+        password: password.value
+      })
+    });
+
+    if (res.ok) {
+      window.location = "/dashboard.html";
+    } else {
+      alert("Invalid username or password");
     }
-    btn.disabled = false;
-    btn.textContent = 'Sign In';
+
+  } catch (err) {
+    alert("Network error");
+  }
+
+  btn.disabled = false;
+  btn.textContent = "Sign in";
 });
 </script>
+
+<footer class="site-footer">
+<p>© 2026 SS Electronics</p>
+<p>Licensed under GPL 3.0</p>
+<p>Author: Subhajit Roy | Contact: subhajitroy005@gmail.com</p>
+<p>
+    Repository: 
+    <a href="https://github.com/SS-Electronics/Re-BOOT-Web" target="_blank">
+      GitHub - Re-BOOT-Web
+    </a>
+</p>
+</footer>
 </body>
 </html>

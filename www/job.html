@@ -1,67 +1,108 @@
-<!doctype html>
+<!DOCTYPE html>
+
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Job — Re-BOOT Web</title>
-  <link rel="stylesheet" href="/style.css">
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Job — Re-BOOT Web</title>
+<link href="/style.css" rel="stylesheet"/>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f6f8fa;
+  color: #2c3e50;
+  margin: 0;
+}
+.site-header {
+  background-color: #ffffff;
+  border-bottom: 2px solid #dcdcdc;
+  padding: 10px 20px;
+}
+.header-container {
+  display: flex;
+  align-items: center;
+}
+.logo {
+  height: 40px;
+  margin-right: 10px;
+}
+.org-name {
+  font-size: 20px;
+  font-weight: 600;
+}
+.site-footer {
+  background-color: #ffffff;
+  border-top: 2px solid #dcdcdc;
+  text-align: center;
+  padding: 15px;
+  font-size: 14px;
+  margin-top: 40px;
+}
+.site-footer a {
+  color: #0073e6;
+  text-decoration: none;
+}
+</style>
 </head>
 <body>
+<header class="site-header">
+<div class="header-container">
+<img alt="SS Electronics Logo" class="logo" src="logo.png"/>
+<h1 class="org-name">SS Electronics</h1>
+</div>
+</header>
+
 <div class="layout">
-  <nav class="sidebar" id="sidebar"></nav>
-  <main class="main">
-    <div id="alerts"></div>
-    <div class="page-header" id="page-header">
-      <div>
-        <div class="breadcrumb"><a href="/dashboard.html">Dashboard</a> / Job</div>
-        <h1 id="job-title">Loading...</h1>
-      </div>
-      <div class="d-flex gap-2" id="action-buttons"></div>
-    </div>
-
-    <div class="row">
-      <!-- Config card -->
-      <div class="col">
-        <div class="card">
-          <div class="card-header">Configuration</div>
-          <div class="card-body" style="padding:0;">
-            <table class="kv-table" id="config-table" style="width:100%;"></table>
-          </div>
-        </div>
-      </div>
-
-      <!-- Status card -->
-      <div class="col">
-        <div class="card">
-          <div class="card-header">Status</div>
-          <div class="card-body">
-            <div class="d-flex align-center gap-2" style="margin-bottom:12px;">
-              <span class="badge badge-pending" id="status-badge">pending</span>
-              <span class="muted text-sm" id="exit-code-txt"></span>
-            </div>
-            <table class="kv-table" id="time-table" style="width:100%;"></table>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Log output -->
-    <div class="card mt-2">
-      <div class="card-header">
-        <span>Output Log</span>
-        <span id="live-indicator" style="display:none;">
-          <span class="live-dot"></span> Live
+<nav class="sidebar" id="sidebar"></nav>
+<main class="main">
+<div id="alerts"></div>
+<div class="page-header" id="page-header">
+<div>
+<div class="breadcrumb"><a href="/dashboard.html">Dashboard</a> / Job</div>
+<h1 id="job-title">Loading...</h1>
+</div>
+<div class="d-flex gap-2" id="action-buttons"></div>
+</div>
+<div class="row">
+<!-- Config card -->
+<div class="col">
+<div class="card">
+<div class="card-header">Configuration</div>
+<div class="card-body" style="padding:0;">
+<table class="kv-table" id="config-table" style="width:100%;"></table>
+</div>
+</div>
+</div>
+<!-- Status card -->
+<div class="col">
+<div class="card">
+<div class="card-header">Status</div>
+<div class="card-body">
+<div class="d-flex align-center gap-2" style="margin-bottom:12px;">
+<span class="badge badge-pending" id="status-badge">pending</span>
+<span class="muted text-sm" id="exit-code-txt"></span>
+</div>
+<table class="kv-table" id="time-table" style="width:100%;"></table>
+</div>
+</div>
+</div>
+</div>
+<!-- Log output -->
+<div class="card mt-2">
+<div class="card-header">
+<span>Output Log</span>
+<span id="live-indicator" style="display:none;">
+<span class="live-dot"></span> Live
         </span>
-        <button class="btn btn-secondary btn-sm" id="scroll-btn"
-                style="margin-left:auto;" onclick="toggleAutoScroll()">
+<button class="btn btn-secondary btn-sm" id="scroll-btn" onclick="toggleAutoScroll()" style="margin-left:auto;">
           ↓ Auto-scroll ON
         </button>
-      </div>
-      <div id="log-output">(no output yet — run the job to see live output)</div>
-    </div>
-  </main>
 </div>
-
+<div id="log-output">(no output yet — run the job to see live output)</div>
+</div>
+</main>
+</div>
 <script src="/app.js"></script>
 <script>
 const JOB_ID = parseInt(new URLSearchParams(location.search).get('id'));
@@ -220,5 +261,17 @@ function stopPoll() {
     }
 })();
 </script>
+
+<footer class="site-footer">
+<p>© 2026 SS Electronics</p>
+<p>Licensed under GPL 3.0</p>
+<p>Author: Subhajit Roy | Contact: subhajitroy005@gmail.com</p>
+<p>
+    Repository: 
+    <a href="https://github.com/SS-Electronics/Re-BOOT-Web" target="_blank">
+      GitHub - Re-BOOT-Web
+    </a>
+</p>
+</footer>
 </body>
 </html>
