@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard — Re-BOOT Web</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div id="alerts"></div>
+    <div class="page-header">
+      <h1>Flash Jobs</h1>
+      <a href="/new_job.html" class="btn btn-primary">+ New Job</a>
+    </div>
+
+    <div class="card">
+      <div style="overflow-x:auto;">
+        <table id="jobs-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Name</th><th>HEX File</th>
+              <th>Interface</th><th>Device</th>
+              <th>Status</th><th>Created</th><th>By</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="jobs-body">
+            <tr><td colspan="9" class="empty-state">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/app.js"></script>
+<script>
+let refreshTimer = null;
+
+async function loadJobs() {
+    const r = await fetch('/api/jobs');
+    if (!r.ok) return;
+    const jobs = await r.json();
+    const tbody = document.getElementById('jobs-body');
+    if (!jobs.length) {
+        tbody.innerHTML = `<tr><td colspan="9">
+          <div class="empty-state">
+            <div class="icon">📋</div>
+            No jobs yet. <a href="/new_job.html">Create one.</a>
+          </div></td></tr>`;
+        return;
+    }
+    tbody.innerHTML = jobs.map(j => `
+      <tr>
+        <td class="muted text-sm">${j.id}</td>
+        <td><a href="/job.html?id=${j.id}">${j.name}</a></td>
+        <td class="mono muted text-sm">${j.hex_file}</td>
+        <td>${ifaceBadge(j.interface)}</td>
+        <td class="mono muted text-sm">${j.device}</td>
+        <td>${statusBadge(j.status)}</td>
+        <td class="muted text-sm">${j.created_at.slice(0,16)}</td>
+        <td class="muted text-sm">${j.username}</td>
+        <td><a href="/job.html?id=${j.id}" class="btn btn-secondary btn-sm">View</a></td>
+      </tr>`).join('');
+
+    const hasRunning = jobs.some(j => j.status === 'running' || j.status === 'pending');
+    if (hasRunning && !refreshTimer) {
+        refreshTimer = setInterval(loadJobs, 3000);
+    } else if (!hasRunning && refreshTimer) {
+        clearInterval(refreshTimer); refreshTimer = null;
+    }
+}
+
+(async () => {
+    const user = await checkAuth();
+    if (!user) return;
+    initSidebar(user, 'dashboard');
+    await loadJobs();
+})();
+</script>
+</body>
+</html>

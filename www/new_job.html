@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New Job — Re-BOOT Web</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div id="alerts"></div>
+    <div class="page-header">
+      <div>
+        <div class="breadcrumb"><a href="/dashboard.html">Dashboard</a> / New Job</div>
+        <h1>New Flash Job</h1>
+      </div>
+    </div>
+
+    <form id="job-form" enctype="multipart/form-data">
+      <div class="row">
+        <!-- Left -->
+        <div class="col">
+          <div class="card">
+            <div class="card-header">Job &amp; Firmware</div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Job Name</label>
+                <input type="text" name="name" placeholder="e.g. v2.1.0 production flash">
+              </div>
+              <div class="form-group">
+                <label>HEX File <span style="color:var(--red)">*</span></label>
+                <input type="file" name="hex_file" accept=".hex" required id="hex-input">
+                <div class="muted text-sm mt-1">Intel HEX (.hex), max 16 MB</div>
+              </div>
+              <div class="form-group">
+                <label>Node ID <span style="color:var(--red)">*</span></label>
+                <input type="text" name="node_id" class="mono" placeholder="1" required>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right -->
+        <div class="col">
+          <div class="card">
+            <div class="card-header">Transport</div>
+            <div class="card-body">
+              <div class="form-group">
+                <label>Interface <span style="color:var(--red)">*</span></label>
+                <select name="interface" id="iface-sel" required>
+                  <option value="serial">Serial (UART)</option>
+                  <option value="tcp">TCP</option>
+                  <option value="can">CAN</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label id="device-label">Device / IP <span style="color:var(--red)">*</span></label>
+                <input type="text" name="device" class="mono" id="device-input"
+                       placeholder="/dev/ttyACM0" required>
+                <div class="muted text-sm mt-1" id="device-hint">e.g. /dev/ttyACM0</div>
+              </div>
+              <div class="form-group" id="port-row" style="display:none;">
+                <label>TCP Port</label>
+                <input type="number" name="tcp_port" class="mono" placeholder="5000" min="1" max="65535">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced -->
+      <div class="card mt-2">
+        <div class="card-header" style="cursor:pointer;" id="adv-toggle">
+          Advanced Options
+          <span style="margin-left:auto;font-size:16px;" id="adv-arrow">▼</span>
+        </div>
+        <div id="adv-body" style="display:none;">
+          <div class="card-body">
+            <div class="row">
+              <div class="col">
+                <div class="form-group">
+                  <label>Max Retries <code>-t</code></label>
+                  <input type="number" name="retries" class="mono" placeholder="2" min="0" max="10">
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label>Reset Flag <code>-r</code></label>
+                  <select name="reset_flag">
+                    <option value="">Default</option>
+                    <option value="0">0 — No reset</option>
+                    <option value="1">1 — Reset</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col">
+                <div class="form-group">
+                  <label>Verbose <code>-v</code></label>
+                  <select name="verbose">
+                    <option value="">Default</option>
+                    <option value="1">1 — Basic</option>
+                    <option value="2">2 — Verbose</option>
+                    <option value="3">3 — All HEX records</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Extra Arguments (appended verbatim)</label>
+              <input type="text" name="extra_args" class="mono" placeholder="--some-future-flag value">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-primary" id="submit-btn">Create Job</button>
+        <a href="/dashboard.html" class="btn btn-secondary">Cancel</a>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script src="/app.js"></script>
+<script>
+const IFACE_HINTS = {
+    serial: ['/dev/ttyACM0', 'e.g. /dev/ttyACM0 or /dev/ttyUSB0'],
+    can:    ['/dev/ttyUSB0', 'e.g. /dev/ttyUSB0 (USB-CAN adapter)'],
+    tcp:    ['192.168.1.100', 'Target IP address'],
+};
+
+document.getElementById('iface-sel').addEventListener('change', function() {
+    const [ph, hint] = IFACE_HINTS[this.value] || IFACE_HINTS.serial;
+    document.getElementById('device-input').placeholder = ph;
+    document.getElementById('device-hint').textContent = hint;
+    document.getElementById('port-row').style.display = this.value === 'tcp' ? '' : 'none';
+});
+
+document.getElementById('adv-toggle').addEventListener('click', () => {
+    const body = document.getElementById('adv-body');
+    const arrow = document.getElementById('adv-arrow');
+    const shown = body.style.display !== 'none';
+    body.style.display = shown ? 'none' : '';
+    arrow.textContent = shown ? '▼' : '▲';
+});
+
+document.getElementById('job-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = 'Creating...';
+    try {
+        const fd = new FormData(e.target);
+        const r = await fetch('/api/jobs', { method: 'POST', body: fd });
+        const data = await r.json();
+        if (r.ok && data.ok) {
+            window.location = `/job.html?id=${data.id}`;
+        } else {
+            showAlert(data.error || 'Failed to create job.', 'error');
+        }
+    } catch {
+        showAlert('Network error.', 'error');
+    }
+    btn.disabled = false; btn.textContent = 'Create Job';
+});
+
+(async () => {
+    const user = await checkAuth();
+    if (!user) return;
+    initSidebar(user, 'new_job');
+})();
+</script>
+</body>
+</html>

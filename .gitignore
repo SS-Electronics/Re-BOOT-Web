@@ -53,3 +53,16 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# C build output
+reboot-web
+
+# Mongoose (fetched at build time)
+mongoose/
+
+# App runtime data
+reboot.db
+uploads/
+logs/
+*.log
+re-boot

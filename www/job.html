@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Job — Re-BOOT Web</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div id="alerts"></div>
+    <div class="page-header" id="page-header">
+      <div>
+        <div class="breadcrumb"><a href="/dashboard.html">Dashboard</a> / Job</div>
+        <h1 id="job-title">Loading...</h1>
+      </div>
+      <div class="d-flex gap-2" id="action-buttons"></div>
+    </div>
+
+    <div class="row">
+      <!-- Config card -->
+      <div class="col">
+        <div class="card">
+          <div class="card-header">Configuration</div>
+          <div class="card-body" style="padding:0;">
+            <table class="kv-table" id="config-table" style="width:100%;"></table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status card -->
+      <div class="col">
+        <div class="card">
+          <div class="card-header">Status</div>
+          <div class="card-body">
+            <div class="d-flex align-center gap-2" style="margin-bottom:12px;">
+              <span class="badge badge-pending" id="status-badge">pending</span>
+              <span class="muted text-sm" id="exit-code-txt"></span>
+            </div>
+            <table class="kv-table" id="time-table" style="width:100%;"></table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log output -->
+    <div class="card mt-2">
+      <div class="card-header">
+        <span>Output Log</span>
+        <span id="live-indicator" style="display:none;">
+          <span class="live-dot"></span> Live
+        </span>
+        <button class="btn btn-secondary btn-sm" id="scroll-btn"
+                style="margin-left:auto;" onclick="toggleAutoScroll()">
+          ↓ Auto-scroll ON
+        </button>
+      </div>
+      <div id="log-output">(no output yet — run the job to see live output)</div>
+    </div>
+  </main>
+</div>
+
+<script src="/app.js"></script>
+<script>
+const JOB_ID = parseInt(new URLSearchParams(location.search).get('id'));
+if (!JOB_ID) { window.location = '/dashboard.html'; }
+
+let autoScroll = true;
+let evtSource  = null;
+let pollTimer  = null;
+let job        = null;
+
+function toggleAutoScroll() {
+    autoScroll = !autoScroll;
+    const btn = document.getElementById('scroll-btn');
+    btn.textContent = `↓ Auto-scroll ${autoScroll ? 'ON' : 'OFF'}`;
+    btn.className = autoScroll ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
+    btn.style.marginLeft = 'auto';
+}
+
+function appendLog(text) {
+    const el = document.getElementById('log-output');
+    if (el.textContent === '(no output yet — run the job to see live output)')
+        el.textContent = '';
+    el.textContent += text + '\n';
+    if (autoScroll) el.scrollTop = el.scrollHeight;
+}
+
+function setStatusBadge(status) {
+    const b = document.getElementById('status-badge');
+    b.className = `badge ${STATUS_CLASS[status] || 'badge-pending'}`;
+    b.innerHTML = (status === 'running'
+        ? '<span class="live-dot" style="width:6px;height:6px;margin-right:3px;"></span>' : '')
+        + status;
+}
+
+function renderJob(j) {
+    job = j;
+    document.getElementById('job-title').textContent = `${j.name} #${j.id}`;
+    document.title = `Job #${j.id} — Re-BOOT Web`;
+
+    const cfg = document.getElementById('config-table');
+    const rows = [
+        ['HEX File', `<span class="mono">${j.hex_file}</span>`],
+        ['Node ID',  `<span class="mono">${j.node_id}</span>`],
+        ['Interface', ifaceBadge(j.interface)],
+        ['Device',   `<span class="mono">${j.device}</span>`],
+    ];
+    if (j.tcp_port)    rows.push(['TCP Port',   `<span class="mono">${j.tcp_port}</span>`]);
+    if (j.retries)     rows.push(['Retries',    `<span class="mono">${j.retries}</span>`]);
+    if (j.verbose)     rows.push(['Verbose',    `<span class="mono">${j.verbose}</span>`]);
+    if (j.extra_args)  rows.push(['Extra Args', `<span class="mono text-sm">${j.extra_args}</span>`]);
+    rows.push(['Created by', j.username]);
+    cfg.innerHTML = rows.map(([k,v]) =>
+        `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+    const times = document.getElementById('time-table');
+    const trows = [];
+    if (j.created_at)  trows.push(['Created',  j.created_at.slice(0,19)]);
+    if (j.started_at)  trows.push(['Started',  j.started_at.slice(0,19)]);
+    if (j.finished_at) trows.push(['Finished', j.finished_at.slice(0,19)]);
+    times.innerHTML = trows.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+    setStatusBadge(j.status);
+    if (j.exit_code !== undefined && j.exit_code !== null && j.exit_code >= 0)
+        document.getElementById('exit-code-txt').textContent = `Exit code: ${j.exit_code}`;
+
+    renderButtons(j.status);
+}
+
+function renderButtons(status) {
+    const c = document.getElementById('action-buttons');
+    const running = status === 'running' || status === 'pending';
+    c.innerHTML = `
+        ${!running ? `<button class="btn btn-primary" onclick="runJob()">▶ Run</button>` : ''}
+        ${running  ? `<button class="btn btn-warning" onclick="stopJob()">■ Stop</button>` : ''}
+        ${!running ? `<button class="btn btn-secondary" onclick="if(confirm('Delete?'))deleteJob()">Delete</button>` : ''}
+    `;
+}
+
+async function runJob() {
+    const r = await fetch(`/api/jobs/${JOB_ID}/run`, { method: 'POST' });
+    if (r.ok) {
+        document.getElementById('log-output').textContent = '';
+        startStream();
+        startPoll();
+        setStatusBadge('running');
+        renderButtons('running');
+    } else {
+        const d = await r.json();
+        showAlert(d.error || 'Failed to start job.', 'error');
+    }
+}
+
+async function stopJob() {
+    await fetch(`/api/jobs/${JOB_ID}/stop`, { method: 'POST' });
+    showAlert('Stop signal sent.', 'info');
+}
+
+async function deleteJob() {
+    const r = await fetch(`/api/jobs/${JOB_ID}`, { method: 'DELETE' });
+    if (r.ok) window.location = '/dashboard.html';
+    else { const d = await r.json(); showAlert(d.error || 'Cannot delete.', 'error'); }
+}
+
+function startStream() {
+    if (evtSource) { evtSource.close(); evtSource = null; }
+    document.getElementById('live-indicator').style.display = '';
+    evtSource = new EventSource(`/api/jobs/${JOB_ID}/stream`);
+    evtSource.onmessage = e => {
+        if (e.data === '[STREAM END]') {
+            stopStream();
+            stopPoll();
+            // Refresh final state
+            fetch(`/api/jobs/${JOB_ID}`).then(r=>r.json()).then(renderJob);
+            return;
+        }
+        appendLog(e.data);
+    };
+    evtSource.onerror = () => { stopStream(); };
+}
+
+function stopStream() {
+    if (evtSource) { evtSource.close(); evtSource = null; }
+    document.getElementById('live-indicator').style.display = 'none';
+}
+
+function startPoll() {
+    if (pollTimer) return;
+    pollTimer = setInterval(async () => {
+        const r = await fetch(`/api/jobs/${JOB_ID}/status`);
+        const d = await r.json();
+        setStatusBadge(d.status);
+        if (d.status !== 'running' && d.status !== 'pending') {
+            stopPoll();
+            renderButtons(d.status);
+        }
+    }, 2000);
+}
+
+function stopPoll() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+}
+
+(async () => {
+    const user = await checkAuth();
+    if (!user) return;
+    initSidebar(user, 'dashboard');
+
+    const r = await fetch(`/api/jobs/${JOB_ID}`);
+    if (!r.ok) { showAlert('Job not found.', 'error'); return; }
+    const j = await r.json();
+    renderJob(j);
+
+    if (j.status === 'running' || j.status === 'pending') {
+        startStream();
+        startPoll();
+    }
+})();
+</script>
+</body>
+</html>

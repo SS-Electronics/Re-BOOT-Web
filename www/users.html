@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Users — Re-BOOT Web</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div class="layout">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main class="main">
+    <div id="alerts"></div>
+    <div class="page-header">
+      <h1>Users</h1>
+    </div>
+
+    <div class="row">
+      <div class="col" style="flex:2;">
+        <div class="card">
+          <div class="card-header">All Users</div>
+          <div style="overflow-x:auto;">
+            <table id="users-table">
+              <thead>
+                <tr><th>#</th><th>Username</th><th>Role</th><th></th></tr>
+              </thead>
+              <tbody id="users-body">
+                <tr><td colspan="4" class="empty-state">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="col">
+        <div class="card">
+          <div class="card-header">Add User</div>
+          <div class="card-body">
+            <form id="add-form">
+              <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" required>
+              </div>
+              <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" required>
+              </div>
+              <div class="form-group">
+                <label>Role</label>
+                <select name="role">
+                  <option value="user">user</option>
+                  <option value="admin">admin</option>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary w-full" id="add-btn">
+                Add User
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/app.js"></script>
+<script>
+let currentUser = null;
+
+async function loadUsers() {
+    const r = await fetch('/api/users');
+    if (!r.ok) return;
+    const users = await r.json();
+    const tbody = document.getElementById('users-body');
+    tbody.innerHTML = users.map(u => `
+        <tr>
+          <td class="muted text-sm">${u.id}</td>
+          <td>${u.username}</td>
+          <td><span class="badge badge-${u.role}">${u.role}</span></td>
+          <td>
+            ${u.id !== currentUser.id
+                ? `<button class="btn btn-secondary btn-sm"
+                           onclick="deleteUser(${u.id}, '${u.username}')">Delete</button>`
+                : `<span class="muted text-sm">(you)</span>`}
+          </td>
+        </tr>`).join('');
+}
+
+async function deleteUser(id, name) {
+    if (!confirm(`Delete user "${name}"?`)) return;
+    const r = await fetch(`/api/users/${id}`, { method: 'DELETE' });
+    if (r.ok) { showAlert(`User "${name}" deleted.`, 'info'); loadUsers(); }
+    else { const d = await r.json(); showAlert(d.error || 'Failed.', 'error'); }
+}
+
+document.getElementById('add-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('add-btn');
+    btn.disabled = true;
+    const data = Object.fromEntries(new FormData(e.target));
+    const r = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+    });
+    const res = await r.json();
+    if (r.ok) {
+        showAlert(`User "${data.username}" created.`, 'info');
+        e.target.reset();
+        loadUsers();
+    } else {
+        showAlert(res.error || 'Failed to create user.', 'error');
+    }
+    btn.disabled = false;
+});
+
+(async () => {
+    const user = await checkAuth(true);
+    if (!user) return;
+    currentUser = user;
+    initSidebar(user, 'users');
+    await loadUsers();
+})();
+</script>
+</body>
+</html>
