@@ -226,6 +226,12 @@ static void handle_jobs_create(struct mg_connection *c,
             for (size_t k = 0; k < strlen(hex_filename); k++)
                 if (hex_filename[k] == ' ') hex_filename[k] = '_';
 
+            /* Prefix with timestamp to avoid collisions between concurrent uploads */
+            char prefixed[256];
+            snprintf(prefixed, sizeof(prefixed), "%lld_%s",
+                     (long long)time(NULL), hex_filename);
+            snprintf(hex_filename, sizeof(hex_filename), "%s", prefixed);
+
             /* Write file */
             char path[512];
             snprintf(path, sizeof(path), "%s/%s", g_upload_dir, hex_filename);

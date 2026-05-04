@@ -1,237 +1,103 @@
-:root {
-  --bg: #f4f6f9;
-  --surface: #ffffff;
-  --border: #d8dee4;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>New Job — Re-BOOT Web</title>
 
-  --text: #24292f;
-  --muted: #6b7280;
+<link rel="stylesheet" href="/style.css"/>
+</head>
 
-  --primary: #1f6feb;
-  --primary-hover: #1a5ed0;
+<body>
 
-  --success: #1a7f37;
-  --danger: #d1242f;
-  --warning: #9a6700;
+<div class="layout">
 
-  --shadow: 0 2px 10px rgba(0,0,0,0.05);
-}
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar"></nav>
 
-/* ---- Base ---- */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+  <!-- Main -->
+  <main class="main">
 
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  font-size: 14px;
-}
+    <div id="alerts"></div>
 
-/* ---- Layout ---- */
-.layout {
-  display: flex;
-  min-height: 100vh;
-}
+    <div class="breadcrumb">
+      <a href="/dashboard.html">Dashboard</a> / New Job
+    </div>
 
-/* ---- Sidebar ---- */
-.sidebar {
-  width: 230px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  padding: 14px;
-}
+    <h1>New Flash Job</h1>
 
-.brand {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--primary);
-  padding: 10px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 12px;
-}
+    <form id="job-form">
 
-.nav-link {
-  display: block;
-  padding: 9px 12px;
-  border-radius: 6px;
-  color: var(--muted);
-  margin-bottom: 4px;
-  transition: 0.2s;
-  gap: 6px;
-  font-weight: 600; 
-  text-decoration: none;
-}
+      <div class="row">
 
-.nav-link:hover {
-  background: #eef3ff;
-  color: var(--primary);
-}
+        <!-- LEFT -->
+        <div class="col">
+          <div class="card">
+            <div class="card-header">Job & Firmware</div>
+            <div class="card-body">
 
-.nav-link.active {
-  background: #e7f0ff;
-  color: var(--primary);
-  font-weight: 500;
-}
+              <div class="form-group">
+                <label>Job Name</label>
+                <input name="name" placeholder="v2.1.0 production flash"/>
+              </div>
 
-/* ---- Main ---- */
-.main {
-  flex: 1;
-  padding: 24px;
-}
+              <div class="form-group">
+                <label>HEX File *</label>
+                <input type="file" name="hex_file" accept=".hex" required/>
+                <div class="muted">Intel HEX (.hex)</div>
+              </div>
 
-/* ---- Center login ---- */
-.center-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-}
+              <div class="form-group">
+                <label>Node ID *</label>
+                <input name="node_id" placeholder="1" required/>
+              </div>
 
-/* ---- Cards ---- */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-}
+            </div>
+          </div>
+        </div>
 
-.card-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  font-weight: 600;
-  background: #fafafa;
-}
+        <!-- RIGHT -->
+        <div class="col">
+          <div class="card">
+            <div class="card-header">Transport</div>
+            <div class="card-body">
 
-.card-body {
-  padding: 16px;
-}
+              <div class="form-group">
+                <label>Interface *</label>
+                <select name="interface" id="iface-sel">
+                  <option value="serial">Serial</option>
+                  <option value="tcp">TCP</option>
+                  <option value="can">CAN</option>
+                </select>
+              </div>
 
-/* ---- Forms ---- */
-label {
-  font-size: 12px;
-  color: var(--muted);
-  margin-bottom: 4px;
-  display: block;
-}
+              <div class="form-group">
+                <label>Device / IP *</label>
+                <input name="device" id="device-input" placeholder="/dev/ttyACM0"/>
+              </div>
 
-input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: white;
-}
+              <div class="form-group" id="port-row" style="display:none;">
+                <label>TCP Port</label>
+                <input type="number" name="tcp_port" placeholder="5000"/>
+              </div>
 
-input:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(31,111,235,0.15);
-}
+            </div>
+          </div>
+        </div>
 
-/* ---- Buttons ---- */
-.btn {
-  padding: 7px 14px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  text-decoration: none;
-}
+      </div>
 
-.toolbar {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 10px 0;
-}
+      <!-- BUTTONS -->
+      <div class="toolbar mt-2">
+        <button class="btn btn-primary" type="submit">Create Job</button>
+        <a class="btn btn-secondary" href="/dashboard.html">Cancel</a>
+      </div>
 
-.breadcrumb {
-  font-size: 13px;
-  color: #94a3b8;
-  margin-bottom: 10px;
-}
+    </form>
 
-.btn-primary {
-  background: var(--primary);
-  color: white;
-}
+  </main>
+</div>
 
-.btn-primary:hover {
-  background: var(--primary-hover);
-}
-
-/* ---- Alerts ---- */
-.alert {
-  padding: 10px 12px;
-  border-radius: 6px;
-  margin-bottom: 12px;
-}
-
-.alert-success {
-  background: #e9f7ef;
-  color: var(--success);
-  border: 1px solid var(--success);
-}
-
-.alert-error {
-  background: #fdecec;
-  color: var(--danger);
-  border: 1px solid var(--danger);
-}
-
-/* ---- Tables ---- */
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th {
-  text-align: left;
-  font-size: 12px;
-  color: var(--muted);
-  padding: 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-td {
-  padding: 10px;
-  border-bottom: 1px solid #eef1f4;
-}
-
-tr:hover {
-  background: #f5f9ff;
-}
-
-/* ---- Badges ---- */
-.badge {
-  padding: 3px 8px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 600;
-}
-
-.badge-success { background: #e9f7ef; color: var(--success); }
-.badge-failed  { background: #fdecec; color: var(--danger); }
-.badge-running { background: #e7f0ff; color: var(--primary); }
-.badge-pending { background: #f3f4f6; color: var(--muted); }
-
-/* ---- Logs ---- */
-#log-output {
-  background: #0b1f3a;
-  color: #dbe7ff;
-  font-family: monospace;
-  font-size: 12px;
-  padding: 12px;
-  border-radius: 8px;
-  height: 400px;
-  overflow-y: auto;
-}
-
-/* ---- Utilities ---- */
-.muted { color: var(--muted); }
-.mt-2 { margin-top: 16px; }
-.w-full { width: 100%; }
+<script src="/app.js"></script>
+</body>
+</html>

@@ -71,7 +71,7 @@ static void *runner_thread(void *arg) {
     if (j.verbose[0])    { argv[argc++] = "-v"; argv[argc++] = j.verbose; }
 
     /* Extra args: split on spaces (simple, no quoting) */
-    static char extra_buf[DB_STR512];
+    char extra_buf[DB_STR512];
     if (j.extra_args[0]) {
         snprintf(extra_buf, sizeof(extra_buf), "%s", j.extra_args);
         char *tok = strtok(extra_buf, " ");
