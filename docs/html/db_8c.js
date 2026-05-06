@@ -1,0 +1,25 @@
+var db_8c =
+[
+    [ "COL", "db_8c.html#a15c984c3e12c8a82ac2a83f7674aa354", null ],
+    [ "JOB_SELECT", "db_8c.html#af751984b98eb5ff77b137150b36135c9", null ],
+    [ "db_close", "db_8c.html#a43539307187c50e84866e403c4c57cef", null ],
+    [ "db_job_create", "db_8c.html#a30136bfa0b029d0ce5d84d86fa135887", null ],
+    [ "db_job_delete", "db_8c.html#abda5b2747e6e7822062ac212599499cf", null ],
+    [ "db_job_get", "db_8c.html#ada08f35fa0bccc7634017d6e0e3acc95", null ],
+    [ "db_job_list", "db_8c.html#a68a222e30106be396ced53fe88bceb40", null ],
+    [ "db_job_set_finished", "db_8c.html#a43fb62a4be34a2c65be932e66b7ff4d6", null ],
+    [ "db_job_set_started", "db_8c.html#a871dfbb753b8d466fa5c88dce197b26e", null ],
+    [ "db_open", "db_8c.html#a866b5f8e4f1e75473eddb2d8c0da9c0b", null ],
+    [ "db_session_create", "db_8c.html#aeaf48cf5fcb001c82b9c844d5f7a0499", null ],
+    [ "db_session_delete", "db_8c.html#adc249f4a474d602e48a2831860a66bbf", null ],
+    [ "db_session_user", "db_8c.html#a3eb021991e7fc9f867d5669b5e67671f", null ],
+    [ "db_user_by_id", "db_8c.html#aa52ee49493657367c9075128884b9c7d", null ],
+    [ "db_user_by_username", "db_8c.html#aef987c70b6425571be8286c6924391ea", null ],
+    [ "db_user_create", "db_8c.html#a848df68c16c679f5d9519a79ebe73cae", null ],
+    [ "db_user_delete", "db_8c.html#a5baa8d095dcedb4b0e86ce12cf682771", null ],
+    [ "db_user_list", "db_8c.html#a3e0e1a52ace9c59b7d1320d1f72a30d6", null ],
+    [ "fill_job", "db_8c.html#a27221b0cf56a9787fcc3e397edb35dae", null ],
+    [ "fill_user", "db_8c.html#add27337de6f610d7a890aa747c3b6e41", null ],
+    [ "g_db", "db_8c.html#a452fb05e95ce282242760ef11bba7295", null ],
+    [ "SCHEMA", "db_8c.html#a3ed531b676a185721d745b30c78c2463", null ]
+];

@@ -1,11 +1,23 @@
+/**
+ * @file db.c
+ * @brief SQLite3 persistence layer implementation.
+ *
+ * Manages a single global database connection opened with WAL journal mode.
+ * All queries use prepared statements to prevent SQL injection.
+ *
+ * @author Subhajit Roy <subhajitroy005@gmail.com>
+ * @date   2026-05-06
+ */
 #include "db.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
+/** Singleton database handle; NULL when the database is closed. */
 static sqlite3 *g_db = NULL;
 
+/** DDL executed once at startup to create tables if they do not exist. */
 static const char *SCHEMA =
     "CREATE TABLE IF NOT EXISTS user ("
     "  id       INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -40,18 +52,42 @@ static const char *SCHEMA =
     "  FOREIGN KEY (user_id) REFERENCES user(id)"
     ");";
 
+/**
+ * @brief Safely copy a SQLite text column into a fixed-size buffer.
+ *
+ * Uses a NULL-guard so that an empty/NULL column produces an empty string.
+ */
 #define COL(s, stmt, idx) \
-    do { const char *_v = (const char *)sqlite3_column_text(stmt, idx); \
-         strncpy(s, _v ? _v : "", sizeof(s)-1); } while(0)
+    do \
+    { \
+        const char *_v = (const char *)sqlite3_column_text(stmt, idx); \
+        strncpy(s, _v ? _v : "", sizeof(s) - 1); \
+    } while (0)
 
-static void fill_user(sqlite3_stmt *stmt, User *u) {
+/**
+ * @brief Populate a User struct from the current SQLite statement row.
+ * @param stmt Statement positioned on a valid row.
+ * @param u    Output struct to fill.
+ */
+static void fill_user(sqlite3_stmt *stmt, User *u)
+{
     u->id = sqlite3_column_int64(stmt, 0);
     COL(u->username, stmt, 1);
     COL(u->pwhash,   stmt, 2);
     COL(u->role,     stmt, 3);
 }
 
-static void fill_job(sqlite3_stmt *stmt, Job *j) {
+/**
+ * @brief Populate a Job struct from the current SQLite statement row.
+ *
+ * Expects the row produced by JOB_SELECT which JOINs the user table so
+ * that column 17 carries the username.
+ *
+ * @param stmt Statement positioned on a valid row.
+ * @param j    Output struct to fill.
+ */
+static void fill_job(sqlite3_stmt *stmt, Job *j)
+{
     j->id = sqlite3_column_int64(stmt, 0);
     COL(j->name,        stmt,  1);
     COL(j->hex_file,    stmt,  2);
@@ -72,94 +108,166 @@ static void fill_job(sqlite3_stmt *stmt, Job *j) {
     COL(j->username,    stmt, 17);
 }
 
-int db_open(const char *path) {
-    if (sqlite3_open(path, &g_db) != SQLITE_OK) {
+/* ------------------------------------------------------------------ */
+/* Lifecycle                                                            */
+/* ------------------------------------------------------------------ */
+
+int db_open(const char *path)
+{
+    if (sqlite3_open(path, &g_db) != SQLITE_OK)
+    {
         fprintf(stderr, "[db] open failed: %s\n", sqlite3_errmsg(g_db));
         return -1;
     }
+
     char *err = NULL;
-    if (sqlite3_exec(g_db, SCHEMA, NULL, NULL, &err) != SQLITE_OK) {
+    if (sqlite3_exec(g_db, SCHEMA, NULL, NULL, &err) != SQLITE_OK)
+    {
         fprintf(stderr, "[db] schema error: %s\n", err);
         sqlite3_free(err);
         return -1;
     }
+
     sqlite3_exec(g_db, "PRAGMA journal_mode=WAL;", NULL, NULL, NULL);
     return 0;
 }
 
-void db_close(void) {
-    if (g_db) { sqlite3_close(g_db); g_db = NULL; }
+void db_close(void)
+{
+    if (g_db)
+    {
+        sqlite3_close(g_db);
+        g_db = NULL;
+    }
 }
 
-/* --- Users --- */
+/* ------------------------------------------------------------------ */
+/* Users                                                                */
+/* ------------------------------------------------------------------ */
 
-int db_user_by_username(const char *username, User *out) {
+int db_user_by_username(const char *username, User *out)
+{
     sqlite3_stmt *s;
     int rc = -1;
+
     if (sqlite3_prepare_v2(g_db,
-        "SELECT id,username,pwhash,role FROM user WHERE username=?",
-        -1, &s, NULL) != SQLITE_OK) return -1;
+            "SELECT id,username,pwhash,role FROM user WHERE username=?",
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_text(s, 1, username, -1, SQLITE_STATIC);
-    if (sqlite3_step(s) == SQLITE_ROW) { fill_user(s, out); rc = 0; }
+    if (sqlite3_step(s) == SQLITE_ROW)
+    {
+        fill_user(s, out);
+        rc = 0;
+    }
+
     sqlite3_finalize(s);
     return rc;
 }
 
-int db_user_by_id(int64_t id, User *out) {
+int db_user_by_id(int64_t id, User *out)
+{
     sqlite3_stmt *s;
     int rc = -1;
+
     if (sqlite3_prepare_v2(g_db,
-        "SELECT id,username,pwhash,role FROM user WHERE id=?",
-        -1, &s, NULL) != SQLITE_OK) return -1;
+            "SELECT id,username,pwhash,role FROM user WHERE id=?",
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_int64(s, 1, id);
-    if (sqlite3_step(s) == SQLITE_ROW) { fill_user(s, out); rc = 0; }
+    if (sqlite3_step(s) == SQLITE_ROW)
+    {
+        fill_user(s, out);
+        rc = 0;
+    }
+
     sqlite3_finalize(s);
     return rc;
 }
 
 int db_user_create(const char *username, const char *pwhash,
-                   const char *role, int64_t *id_out) {
+                   const char *role, int64_t *id_out)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db,
-        "INSERT INTO user (username,pwhash,role) VALUES (?,?,?)",
-        -1, &s, NULL) != SQLITE_OK) return -1;
+            "INSERT INTO user (username,pwhash,role) VALUES (?,?,?)",
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_text(s, 1, username, -1, SQLITE_STATIC);
     sqlite3_bind_text(s, 2, pwhash,   -1, SQLITE_STATIC);
     sqlite3_bind_text(s, 3, role,     -1, SQLITE_STATIC);
-    int rc = sqlite3_step(s) == SQLITE_DONE ? 0 : -1;
-    if (rc == 0 && id_out) *id_out = sqlite3_last_insert_rowid(g_db);
+
+    int rc = (sqlite3_step(s) == SQLITE_DONE) ? 0 : -1;
+    if (rc == 0 && id_out)
+    {
+        *id_out = sqlite3_last_insert_rowid(g_db);
+    }
+
     sqlite3_finalize(s);
     return rc;
 }
 
-int db_user_delete(int64_t id) {
+int db_user_delete(int64_t id)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db,
-        "DELETE FROM user WHERE id=?", -1, &s, NULL) != SQLITE_OK) return -1;
+            "DELETE FROM user WHERE id=?", -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_int64(s, 1, id);
-    int rc = sqlite3_step(s) == SQLITE_DONE ? 0 : -1;
+    int rc = (sqlite3_step(s) == SQLITE_DONE) ? 0 : -1;
     sqlite3_finalize(s);
     return rc;
 }
 
-int db_user_list(User **out, int *cnt) {
+int db_user_list(User **out, int *cnt)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db,
-        "SELECT id,username,pwhash,role FROM user ORDER BY id",
-        -1, &s, NULL) != SQLITE_OK) return -1;
-    int cap = 16, n = 0;
-    User *arr = malloc(sizeof(User) * cap);
-    while (sqlite3_step(s) == SQLITE_ROW) {
-        if (n == cap) { cap *= 2; arr = realloc(arr, sizeof(User)*cap); }
+            "SELECT id,username,pwhash,role FROM user ORDER BY id",
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
+    int   cap = 16, n = 0;
+    User *arr = malloc(sizeof(User) * (size_t)cap);
+
+    while (sqlite3_step(s) == SQLITE_ROW)
+    {
+        if (n == cap)
+        {
+            cap *= 2;
+            arr  = realloc(arr, sizeof(User) * (size_t)cap);
+        }
         fill_user(s, &arr[n++]);
     }
+
     sqlite3_finalize(s);
-    *out = arr; *cnt = n;
+    *out = arr;
+    *cnt = n;
     return 0;
 }
 
-/* --- Jobs --- */
+/* ------------------------------------------------------------------ */
+/* Jobs                                                                 */
+/* ------------------------------------------------------------------ */
 
+/** Common SELECT fragment that JOINs the user table to get the username. */
 #define JOB_SELECT \
     "SELECT j.id,j.name,j.hex_file,j.node_id,j.interface,j.device," \
     "j.tcp_port,j.retries,j.reset_flag,j.verbose,j.extra_args," \
@@ -167,12 +275,18 @@ int db_user_list(User **out, int *cnt) {
     "j.user_id,u.username " \
     "FROM job j JOIN user u ON j.user_id=u.id "
 
-int64_t db_job_create(const Job *j) {
+int64_t db_job_create(const Job *j)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db,
-        "INSERT INTO job (name,hex_file,node_id,interface,device,tcp_port,"
-        "retries,reset_flag,verbose,extra_args,user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-        -1, &s, NULL) != SQLITE_OK) return -1;
+            "INSERT INTO job (name,hex_file,node_id,interface,device,tcp_port,"
+            "retries,reset_flag,verbose,extra_args,user_id) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_text(s,  1, j->name,       -1, SQLITE_STATIC);
     sqlite3_bind_text(s,  2, j->hex_file,   -1, SQLITE_STATIC);
     sqlite3_bind_text(s,  3, j->node_id,    -1, SQLITE_STATIC);
@@ -183,111 +297,184 @@ int64_t db_job_create(const Job *j) {
     sqlite3_bind_text(s,  8, j->reset_flag, -1, SQLITE_STATIC);
     sqlite3_bind_text(s,  9, j->verbose,    -1, SQLITE_STATIC);
     sqlite3_bind_text(s, 10, j->extra_args, -1, SQLITE_STATIC);
-    sqlite3_bind_int64(s,11, j->user_id);
+    sqlite3_bind_int64(s, 11, j->user_id);
+
     int64_t id = -1;
-    if (sqlite3_step(s) == SQLITE_DONE) id = sqlite3_last_insert_rowid(g_db);
+    if (sqlite3_step(s) == SQLITE_DONE)
+    {
+        id = sqlite3_last_insert_rowid(g_db);
+    }
+
     sqlite3_finalize(s);
     return id;
 }
 
-int db_job_get(int64_t id, Job *out) {
+int db_job_get(int64_t id, Job *out)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db, JOB_SELECT "WHERE j.id=?",
-        -1, &s, NULL) != SQLITE_OK) return -1;
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_int64(s, 1, id);
     int rc = -1;
-    if (sqlite3_step(s) == SQLITE_ROW) { fill_job(s, out); rc = 0; }
+    if (sqlite3_step(s) == SQLITE_ROW)
+    {
+        fill_job(s, out);
+        rc = 0;
+    }
+
     sqlite3_finalize(s);
     return rc;
 }
 
-int db_job_list(Job **out, int *cnt) {
+int db_job_list(Job **out, int *cnt)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db,
-        JOB_SELECT "ORDER BY j.id DESC LIMIT 100",
-        -1, &s, NULL) != SQLITE_OK) return -1;
-    int cap = 16, n = 0;
-    Job *arr = malloc(sizeof(Job) * cap);
-    while (sqlite3_step(s) == SQLITE_ROW) {
-        if (n == cap) { cap *= 2; arr = realloc(arr, sizeof(Job)*cap); }
+            JOB_SELECT "ORDER BY j.id DESC LIMIT 100",
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
+    int  cap = 16, n = 0;
+    Job *arr = malloc(sizeof(Job) * (size_t)cap);
+
+    while (sqlite3_step(s) == SQLITE_ROW)
+    {
+        if (n == cap)
+        {
+            cap *= 2;
+            arr  = realloc(arr, sizeof(Job) * (size_t)cap);
+        }
         fill_job(s, &arr[n++]);
     }
+
     sqlite3_finalize(s);
-    *out = arr; *cnt = n;
+    *out = arr;
+    *cnt = n;
     return 0;
 }
 
-int db_job_set_started(int64_t id) {
+int db_job_set_started(int64_t id)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db,
-        "UPDATE job SET status='running', started_at=datetime('now') WHERE id=?",
-        -1, &s, NULL) != SQLITE_OK) return -1;
+            "UPDATE job SET status='running', started_at=datetime('now') WHERE id=?",
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_int64(s, 1, id);
-    int rc = sqlite3_step(s) == SQLITE_DONE ? 0 : -1;
+    int rc = (sqlite3_step(s) == SQLITE_DONE) ? 0 : -1;
     sqlite3_finalize(s);
     return rc;
 }
 
-int db_job_set_finished(int64_t id, const char *status, int exit_code) {
+int db_job_set_finished(int64_t id, const char *status, int exit_code)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db,
-        "UPDATE job SET status=?, finished_at=datetime('now'), exit_code=? WHERE id=?",
-        -1, &s, NULL) != SQLITE_OK) return -1;
+            "UPDATE job SET status=?, finished_at=datetime('now'), exit_code=? WHERE id=?",
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_text(s,  1, status,    -1, SQLITE_STATIC);
     sqlite3_bind_int(s,   2, exit_code);
     sqlite3_bind_int64(s, 3, id);
-    int rc = sqlite3_step(s) == SQLITE_DONE ? 0 : -1;
+
+    int rc = (sqlite3_step(s) == SQLITE_DONE) ? 0 : -1;
     sqlite3_finalize(s);
     return rc;
 }
 
-int db_job_delete(int64_t id) {
+int db_job_delete(int64_t id)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db,
-        "DELETE FROM job WHERE id=?", -1, &s, NULL) != SQLITE_OK) return -1;
+            "DELETE FROM job WHERE id=?", -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_int64(s, 1, id);
-    int rc = sqlite3_step(s) == SQLITE_DONE ? 0 : -1;
+    int rc = (sqlite3_step(s) == SQLITE_DONE) ? 0 : -1;
     sqlite3_finalize(s);
     return rc;
 }
 
-/* --- Sessions --- */
+/* ------------------------------------------------------------------ */
+/* Sessions                                                             */
+/* ------------------------------------------------------------------ */
 
-int db_session_create(const char *token, int64_t user_id, int64_t expires_at) {
+int db_session_create(const char *token, int64_t user_id, int64_t expires_at)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db,
-        "INSERT OR REPLACE INTO session (token,user_id,expires_at) VALUES (?,?,?)",
-        -1, &s, NULL) != SQLITE_OK) return -1;
+            "INSERT OR REPLACE INTO session (token,user_id,expires_at) VALUES (?,?,?)",
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_text(s,  1, token,      -1, SQLITE_STATIC);
     sqlite3_bind_int64(s, 2, user_id);
     sqlite3_bind_int64(s, 3, expires_at);
-    int rc = sqlite3_step(s) == SQLITE_DONE ? 0 : -1;
+
+    int rc = (sqlite3_step(s) == SQLITE_DONE) ? 0 : -1;
     sqlite3_finalize(s);
     return rc;
 }
 
-int db_session_user(const char *token, int64_t now, int64_t *uid_out) {
+int db_session_user(const char *token, int64_t now, int64_t *uid_out)
+{
     sqlite3_stmt *s;
     int rc = -1;
+
     if (sqlite3_prepare_v2(g_db,
-        "SELECT user_id FROM session WHERE token=? AND expires_at>?",
-        -1, &s, NULL) != SQLITE_OK) return -1;
+            "SELECT user_id FROM session WHERE token=? AND expires_at>?",
+            -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_text(s,  1, token, -1, SQLITE_STATIC);
     sqlite3_bind_int64(s, 2, now);
-    if (sqlite3_step(s) == SQLITE_ROW) {
+
+    if (sqlite3_step(s) == SQLITE_ROW)
+    {
         *uid_out = sqlite3_column_int64(s, 0);
         rc = 0;
     }
+
     sqlite3_finalize(s);
     return rc;
 }
 
-int db_session_delete(const char *token) {
+int db_session_delete(const char *token)
+{
     sqlite3_stmt *s;
+
     if (sqlite3_prepare_v2(g_db,
-        "DELETE FROM session WHERE token=?", -1, &s, NULL) != SQLITE_OK) return -1;
+            "DELETE FROM session WHERE token=?", -1, &s, NULL) != SQLITE_OK)
+    {
+        return -1;
+    }
+
     sqlite3_bind_text(s, 1, token, -1, SQLITE_STATIC);
-    int rc = sqlite3_step(s) == SQLITE_DONE ? 0 : -1;
+    int rc = (sqlite3_step(s) == SQLITE_DONE) ? 0 : -1;
     sqlite3_finalize(s);
     return rc;
 }

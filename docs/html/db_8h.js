@@ -1,0 +1,25 @@
+var db_8h =
+[
+    [ "User", "structUser.html", "structUser" ],
+    [ "Job", "structJob.html", "structJob" ],
+    [ "DB_STR128", "group__db__str__sizes.html#ga25c7c0ab397a3ab614aedb7c6ab37617", null ],
+    [ "DB_STR256", "group__db__str__sizes.html#gafa6a3a2cce1bfb9fe2e82b83de471495", null ],
+    [ "DB_STR512", "group__db__str__sizes.html#gae1445b9c2d9be10f85065f9fb0cfef90", null ],
+    [ "DB_STR64", "group__db__str__sizes.html#ga712dcfc163d0f19bd70284267753babe", null ],
+    [ "db_close", "db_8h.html#a43539307187c50e84866e403c4c57cef", null ],
+    [ "db_job_create", "db_8h.html#a30136bfa0b029d0ce5d84d86fa135887", null ],
+    [ "db_job_delete", "db_8h.html#abda5b2747e6e7822062ac212599499cf", null ],
+    [ "db_job_get", "db_8h.html#ada08f35fa0bccc7634017d6e0e3acc95", null ],
+    [ "db_job_list", "db_8h.html#a68a222e30106be396ced53fe88bceb40", null ],
+    [ "db_job_set_finished", "db_8h.html#a43fb62a4be34a2c65be932e66b7ff4d6", null ],
+    [ "db_job_set_started", "db_8h.html#a871dfbb753b8d466fa5c88dce197b26e", null ],
+    [ "db_open", "db_8h.html#a866b5f8e4f1e75473eddb2d8c0da9c0b", null ],
+    [ "db_session_create", "db_8h.html#aeaf48cf5fcb001c82b9c844d5f7a0499", null ],
+    [ "db_session_delete", "db_8h.html#adc249f4a474d602e48a2831860a66bbf", null ],
+    [ "db_session_user", "db_8h.html#a3eb021991e7fc9f867d5669b5e67671f", null ],
+    [ "db_user_by_id", "db_8h.html#aa52ee49493657367c9075128884b9c7d", null ],
+    [ "db_user_by_username", "db_8h.html#aef987c70b6425571be8286c6924391ea", null ],
+    [ "db_user_create", "db_8h.html#a848df68c16c679f5d9519a79ebe73cae", null ],
+    [ "db_user_delete", "db_8h.html#a5baa8d095dcedb4b0e86ce12cf682771", null ],
+    [ "db_user_list", "db_8h.html#a3e0e1a52ace9c59b7d1320d1f72a30d6", null ]
+];

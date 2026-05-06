@@ -1,5 +1,10 @@
 # Re-BOOT Web
 
+[![Build](https://github.com/SS-Electronics/Re-BOOT-Web/actions/workflows/build.yml/badge.svg)](https://github.com/SS-Electronics/Re-BOOT-Web/actions/workflows/build.yml)
+[![Open Issues](https://img.shields.io/github/issues/SS-Electronics/Re-BOOT-Web)](https://github.com/SS-Electronics/Re-BOOT-Web/issues)
+[![Language](https://img.shields.io/badge/language-C-blue?logo=c)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![Type](https://img.shields.io/badge/type-web%20server-informational?logo=nginx)](https://github.com/SS-Electronics/Re-BOOT-Web)
+
 A lightweight C web server for remotely flashing embedded firmware via the [Re-BOOT](https://github.com/SS-Electronics/Re-BOOT) utility. Runs on a Raspberry Pi, acts as a Jenkins-style OTA portal.
 
 ```
@@ -32,14 +37,20 @@ A lightweight C web server for remotely flashing embedded firmware via the [Re-B
 
 ```
 Re-BOOT-Web/
-├── src/
-│   ├── main.c          # Entry point — arg parsing, Mongoose event loop
-│   ├── db.c / db.h     # SQLite3 wrapper (users, jobs, sessions)
-│   ├── auth.c / auth.h # Password hashing (SHA256+salt), session tokens
-│   ├── job.c / job.h   # Subprocess runner (fork/exec), SSE log tailing
-│   ├── routes.c / .h   # HTTP route handlers, REST API
-│   └── sha256.c / .h   # Embedded SHA256 (public domain, no OpenSSL dep)
-├── www/
+├── src/                    # C source files
+│   ├── main.c              # Entry point — arg parsing, Mongoose event loop
+│   ├── db.c                # SQLite3 wrapper (users, jobs, sessions)
+│   ├── auth.c              # Password hashing (SHA256+salt), session tokens
+│   ├── job.c               # Subprocess runner (fork/exec), SSE log tailing
+│   ├── routes.c            # HTTP route handlers, REST API dispatcher
+│   └── sha256.c            # Embedded SHA256 (public domain, no OpenSSL dep)
+├── inc/                    # C header files
+│   ├── db.h                # User/Job structs and DB function declarations
+│   ├── auth.h              # Auth constants and function declarations
+│   ├── job.h               # RunningJob/SseConn structs and function declarations
+│   ├── routes.h            # http_handler() declaration
+│   └── sha256.h            # SHA256_CTX typedef and function declarations
+├── www/                    # Frontend static assets
 │   ├── login.html
 │   ├── dashboard.html
 │   ├── new_job.html
@@ -47,11 +58,12 @@ Re-BOOT-Web/
 │   ├── users.html
 │   ├── style.css
 │   └── app.js
-├── mongoose/           # Created by `make` — Mongoose single-file HTTP lib
-├── uploads/            # Created at runtime — uploaded .hex files
-├── logs/               # Created at runtime — per-job output logs
+├── mongoose/               # Created by `make` — Mongoose single-file HTTP lib
+├── uploads/                # Created at runtime — uploaded .hex files
+├── logs/                   # Created at runtime — per-job output logs
 ├── Makefile
 ├── install_deps.sh
+├── ARCH.md                 # Detailed architectural description
 └── README.md
 ```
 
@@ -297,7 +309,6 @@ server {
     server_name _;
     return 301 https://$host$request_uri;
 }
-
 ```
 
 ---
@@ -349,7 +360,7 @@ All endpoints except `/api/login` require a valid session cookie (`rbsid`).
 
 ```bash
 # Debug build
-make CFLAGS="-Wall -Wextra -g -O0 -I src -I mongoose"
+make CFLAGS="-Wall -Wextra -g -O0 -I src -I inc -I mongoose"
 
 # Clean binary only
 make clean
@@ -357,6 +368,12 @@ make clean
 # Clean binary + Mongoose sources
 make distclean
 ```
+
+---
+
+## Documentation
+
+- [ARCH.md](ARCH.md) — Detailed architectural description of all components, data flow, and design decisions.
 
 ---
 

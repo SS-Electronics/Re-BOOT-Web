@@ -1,18 +1,21 @@
 CC      = gcc
 TARGET  = reboot-web
 SRCDIR  = src
+INCDIR  = inc
 MGDIR   = mongoose
 
-SRCS    = $(SRCDIR)/main.c \
-          $(SRCDIR)/db.c   \
-          $(SRCDIR)/auth.c \
-          $(SRCDIR)/job.c  \
+SRCS    = $(SRCDIR)/main.c   \
+          $(SRCDIR)/db.c     \
+          $(SRCDIR)/auth.c   \
+          $(SRCDIR)/job.c    \
           $(SRCDIR)/routes.c \
           $(SRCDIR)/sha256.c \
           $(MGDIR)/mongoose.c
 
-CFLAGS  = -Wall -Wextra -O2 \
-          -I$(SRCDIR) -I$(MGDIR) \
+CFLAGS  = -Wall -Wextra -O2        \
+          -I$(SRCDIR)              \
+          -I$(INCDIR)              \
+          -I$(MGDIR)               \
           -DMG_ENABLE_SSI=0
 
 LDFLAGS = -lsqlite3 -lpthread
