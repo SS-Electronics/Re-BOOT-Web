@@ -1,0 +1,30 @@
+/* ---------------------------------------------------------------
+ * Re-BOOT Web — Doxygen custom stylesheet
+ * Fixes oversized logo and tightens the title-area header.
+ * Author: Subhajit Roy <subhajitroy005@gmail.com>
+ * --------------------------------------------------------------- */
+
+/* --- Logo -------------------------------------------------------- */
+#projectlogo img {
+    max-height : 52px;   /* cap logo height */
+    width      : auto;   /* keep aspect ratio */
+    padding    : 4px 8px 4px 0;
+}
+
+/* --- Title area (the whole top banner) -------------------------- */
+#titlearea {
+    padding    : 6px 12px;
+    border-bottom: 1px solid var(--separator-color, #ddd);
+}
+
+/* --- Project name font ------------------------------------------ */
+#projectname {
+    font-size  : 1.6em;
+    line-height: 1.2;
+}
+
+/* --- Project brief (subtitle) ----------------------------------- */
+#projectbrief {
+    font-size  : 0.85em;
+    opacity    : 0.75;
+}
