@@ -173,11 +173,12 @@ function renderJob(j) {
 
 function renderButtons(status) {
     const c = document.getElementById('action-buttons');
-    const running = status === 'running' || status === 'pending';
+    const running = status === 'running';
+    const canRun  = status === 'pending' || status === 'success' || status === 'failed';
     c.innerHTML = `
-        ${!running ? `<button class="btn btn-primary" onclick="runJob()">▶ Run</button>` : ''}
-        ${running  ? `<button class="btn btn-warning" onclick="stopJob()">■ Stop</button>` : ''}
-        ${!running ? `<button class="btn btn-secondary" onclick="if(confirm('Delete?'))deleteJob()">Delete</button>` : ''}
+        ${canRun    ? `<button class="btn btn-primary" onclick="runJob()">▶ Run</button>` : ''}
+        ${running   ? `<button class="btn btn-warning" onclick="stopJob()">■ Stop</button>` : ''}
+        ${!running  ? `<button class="btn btn-secondary" onclick="if(confirm('Delete?'))deleteJob()">Delete</button>` : ''}
     `;
 }
 
@@ -234,6 +235,9 @@ function startPoll() {
         const r = await fetch(`/api/jobs/${JOB_ID}/status`);
         const d = await r.json();
         setStatusBadge(d.status);
+        if (d.status === 'running' && !evtSource) {
+            startStream();
+        }
         if (d.status !== 'running' && d.status !== 'pending') {
             stopPoll();
             renderButtons(d.status);
@@ -255,8 +259,10 @@ function stopPoll() {
     const j = await r.json();
     renderJob(j);
 
-    if (j.status === 'running' || j.status === 'pending') {
+    if (j.status === 'running') {
         startStream();
+        startPoll();
+    } else if (j.status === 'pending') {
         startPoll();
     }
 })();

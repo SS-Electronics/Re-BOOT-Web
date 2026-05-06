@@ -1,103 +1,270 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>New Job — Re-BOOT Web</title>
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --border:   #30363d;
+  --muted:    #8b949e;
+  --text:     #c9d1d9;
+  --blue:     #58a6ff;
+  --orange:   #f78166;
+  --green:    #2ea043;
+  --red:      #da3633;
+  --yellow:   #d29922;
+}
 
-<link rel="stylesheet" href="/style.css"/>
-</head>
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-<body>
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
 
-<div class="layout">
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
 
-  <!-- Sidebar -->
-  <nav class="sidebar" id="sidebar"></nav>
+/* ---- Layout ---- */
+.layout { display: flex; min-height: 100vh; }
 
-  <!-- Main -->
-  <main class="main">
+.sidebar {
+  width: 210px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
 
-    <div id="alerts"></div>
+.sidebar .brand {
+  padding: 8px 12px 16px;
+  font-size: 18px;
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.brand .re   { color: var(--blue); }
+.brand .boot { color: var(--orange); }
+.brand small { color: var(--muted); font-size: 11px; font-weight: 400; margin-left: 4px; }
 
-    <div class="breadcrumb">
-      <a href="/dashboard.html">Dashboard</a> / New Job
-    </div>
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.nav-link:hover, .nav-link.active {
+  background: #21262d;
+  color: var(--text);
+  text-decoration: none;
+}
 
-    <h1>New Flash Job</h1>
+.main { flex: 1; padding: 24px; overflow: auto; }
 
-    <form id="job-form">
+/* ---- Center (login page) ---- */
+.center-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: var(--bg);
+}
 
-      <div class="row">
+/* ---- Cards ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.card-header {
+  background: #21262d;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 16px;
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  border-radius: 8px 8px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-body { padding: 16px; }
 
-        <!-- LEFT -->
-        <div class="col">
-          <div class="card">
-            <div class="card-header">Job & Firmware</div>
-            <div class="card-body">
+/* ---- Form controls ---- */
+input, select, textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+  font-family: inherit;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px rgba(88,166,255,.15);
+}
+label {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.form-group { margin-bottom: 14px; }
 
-              <div class="form-group">
-                <label>Job Name</label>
-                <input name="name" placeholder="v2.1.0 production flash"/>
-              </div>
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: .15s;
+  font-family: inherit;
+}
+.btn-primary   { background: var(--green); border-color: var(--green); color: #fff; }
+.btn-primary:hover { background: #3fb950; }
+.btn-danger    { background: var(--red); border-color: var(--red); color: #fff; }
+.btn-danger:hover { background: #b91c1c; }
+.btn-secondary { background: #21262d; border-color: var(--border); color: var(--text); }
+.btn-secondary:hover { background: #2d333b; }
+.btn-warning   { background: var(--yellow); border-color: var(--yellow); color: #0d1117; }
+.btn-warning:hover { background: #b07800; }
+.btn-sm { padding: 4px 10px; font-size: 12px; }
 
-              <div class="form-group">
-                <label>HEX File *</label>
-                <input type="file" name="hex_file" accept=".hex" required/>
-                <div class="muted">Intel HEX (.hex)</div>
-              </div>
+/* ---- Alerts ---- */
+.alert {
+  padding: 10px 14px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  border: 1px solid transparent;
+}
+.alert-success { background: rgba(46,160,67,.2);  border-color: var(--green); color: #56d364; }
+.alert-error   { background: rgba(218,54,51,.2);  border-color: var(--red);   color: #f85149; }
+.alert-info    { background: rgba(88,166,255,.1); border-color: var(--blue);  color: var(--blue); }
 
-              <div class="form-group">
-                <label>Node ID *</label>
-                <input name="node_id" placeholder="1" required/>
-              </div>
+/* ---- Tables ---- */
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+td { padding: 10px 12px; border-bottom: 1px solid #21262d; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #1c2128; }
 
-            </div>
-          </div>
-        </div>
+/* ---- Badges ---- */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .3px;
+}
+.badge-pending  { background: #6e7681;          color: #fff; }
+.badge-running  { background: var(--yellow);    color: #0d1117; }
+.badge-success  { background: var(--green);     color: #fff; }
+.badge-failed   { background: var(--red);       color: #fff; }
+.badge-admin    { background: var(--red);       color: #fff; }
+.badge-user     { background: #6e7681;          color: #fff; }
+.badge-serial   { background: #1f6feb;          color: #fff; }
+.badge-tcp      { background: #8250df;          color: #fff; }
+.badge-can      { background: #bf8700;          color: #fff; }
 
-        <!-- RIGHT -->
-        <div class="col">
-          <div class="card">
-            <div class="card-header">Transport</div>
-            <div class="card-body">
+/* ---- Log output ---- */
+#log-output {
+  background: #010409;
+  color: #56d364;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  height: 500px;
+  overflow-y: auto;
+  padding: 14px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  border-radius: 0 0 8px 8px;
+}
 
-              <div class="form-group">
-                <label>Interface *</label>
-                <select name="interface" id="iface-sel">
-                  <option value="serial">Serial</option>
-                  <option value="tcp">TCP</option>
-                  <option value="can">CAN</option>
-                </select>
-              </div>
+/* ---- Page header ---- */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.page-header h1 { font-size: 20px; font-weight: 600; }
+.page-header .breadcrumb { color: var(--muted); font-size: 12px; margin-bottom: 4px; }
 
-              <div class="form-group">
-                <label>Device / IP *</label>
-                <input name="device" id="device-input" placeholder="/dev/ttyACM0"/>
-              </div>
+/* ---- Grid ---- */
+.row { display: flex; gap: 16px; }
+.col { flex: 1; }
 
-              <div class="form-group" id="port-row" style="display:none;">
-                <label>TCP Port</label>
-                <input type="number" name="tcp_port" placeholder="5000"/>
-              </div>
+/* ---- Utilities ---- */
+.mono         { font-family: 'Courier New', monospace; }
+.muted        { color: var(--muted); }
+.text-sm      { font-size: 12px; }
+.mt-1         { margin-top: 8px; }
+.mt-2         { margin-top: 16px; }
+.gap-2        { gap: 8px; }
+.d-flex       { display: flex; }
+.align-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.w-full       { width: 100%; }
+.breadcrumb   { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
 
-            </div>
-          </div>
-        </div>
+/* ---- Live dot ---- */
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--yellow);
+  animation: pulse 1s infinite;
+  display: inline-block;
+  margin-right: 4px;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-      </div>
+/* ---- KV table ---- */
+.kv-table td:first-child { color: var(--muted); width: 140px; font-size: 12px; }
+.kv-table td { padding: 6px 12px; }
 
-      <!-- BUTTONS -->
-      <div class="toolbar mt-2">
-        <button class="btn btn-primary" type="submit">Create Job</button>
-        <a class="btn btn-secondary" href="/dashboard.html">Cancel</a>
-      </div>
+/* ---- Status badge override ---- */
+#status-badge { font-size: 14px; padding: 4px 12px; }
 
-    </form>
+/* ---- Toolbar ---- */
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+}
 
-  </main>
-</div>
-
-<script src="/app.js"></script>
-</body>
-</html>
+/* ---- Empty state ---- */
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: var(--muted);
+}
+.empty-state .icon { font-size: 32px; margin-bottom: 12px; }
