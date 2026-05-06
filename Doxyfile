@@ -1,7 +1,7 @@
 #---------------------------------------------------------------------------
 # Re-BOOT Web — Doxygen Configuration
 # Author: Subhajit Roy <subhajitroy005@gmail.com>
-# Generated HTML output goes to: docs/html/index.html
+# Generated HTML output goes to: docs/index.html
 #---------------------------------------------------------------------------
 
 #---------------------------------------------------------------------------
@@ -61,7 +61,7 @@ REFERENCES_LINK_SOURCE = YES
 # HTML output
 #---------------------------------------------------------------------------
 GENERATE_HTML          = YES
-HTML_OUTPUT            = html
+HTML_OUTPUT            = .
 HTML_FILE_EXTENSION    = .html
 HTML_COLORSTYLE        = AUTO_LIGHT
 HTML_DYNAMIC_MENUS     = YES
